@@ -1,0 +1,28 @@
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# env / secrets
+.env
+.env.local
+
+# runtime data
+data/
+runs/
+*.db
+*.sqlite3
+
+# media temp
+*.mp3
+*.mp4
+
+# misc
+.idea/
+.vscode/
+.DS_Store
+.pytest_cache/
+.pytest_tmp/

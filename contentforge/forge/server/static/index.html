@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ContentForge 控制台</title>
+<style>
+  body { font-family: "Microsoft YaHei", system-ui, sans-serif; margin: 0; background: #0c1426; color: #e9eef7; }
+  header { padding: 14px 22px; background: #12203a; border-bottom: 1px solid #1f3356; display: flex; align-items: baseline; gap: 12px; }
+  header h1 { font-size: 18px; margin: 0; }
+  header small { color: #8aa0c0; }
+  main { display: grid; grid-template-columns: 360px 1fr 1fr; gap: 18px; padding: 18px; max-width: 1500px; margin: 0 auto; }
+  .card { background: #14213b; border: 1px solid #223558; border-radius: 10px; padding: 14px; }
+  .card h2 { font-size: 14px; margin: 0 0 12px; color: #7fb3ff; }
+  label { display: block; font-size: 12px; color: #93a7c6; margin: 10px 0 4px; }
+  input[type=text], select, textarea { width: 100%; box-sizing: border-box; padding: 8px; border-radius: 6px; border: 1px solid #2c4773; background: #0e1930; color: #eef4ff; }
+  .platform-row { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: #bcd0ea; }
+  .platform-row label { display: flex; align-items: center; gap: 4px; margin: 0; color: #bcd0ea; }
+  button { margin-top: 10px; padding: 7px 14px; border: 0; border-radius: 6px; background: #2f6fed; color: #fff; cursor: pointer; }
+  button.secondary { background: #243b61; }
+  button:disabled { opacity: .5; cursor: default; }
+  #jobs { list-style: none; padding: 0; margin: 10px 0 0; max-height: 320px; overflow: auto; }
+  #jobs li { padding: 8px 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; }
+  #jobs li:hover { background: #1c2f52; }
+  #jobs .st { font-size: 11px; padding: 1px 7px; border-radius: 10px; background: #31486f; white-space: nowrap; }
+  #jobs .st.done, #jobs .st.learned, #jobs .st.published { background: #1d6b45; }
+  #jobs .st.failed { background: #8a2b2b; }
+  #events { font-family: Consolas, monospace; font-size: 12px; height: 380px; overflow: auto; background: #0a1220; border: 1px solid #1e3050; border-radius: 8px; padding: 10px; }
+  .ev { margin: 3px 0; }
+  .ev .k { color: #ffb86c; }
+  .ev .m { color: #d5e0f0; }
+  .ev .p { color: #8aa0c0; white-space: pre-wrap; }
+  #meta { font-size: 12px; color: #9fb3d4; margin-bottom: 8px; line-height: 1.6; }
+  #actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  #actions input { width: 170px; }
+  .badge { background: #7a4f0e; color: #ffd591; padding: 1px 8px; border-radius: 10px; font-size: 11px; }
+  .metric-row { font-size: 12px; margin: 2px 0; display: flex; gap: 8px; align-items: center; }
+  .metric-row .bar { background: #1c3d66; height: 10px; border-radius: 5px; flex: 1; }
+  .metric-row .bar i { display: block; height: 10px; border-radius: 5px; background: linear-gradient(90deg,#2f6fed,#55d0a0); }
+  .metric-row .n { min-width: 110px; color: #bcd0ea; }
+  #metrics { max-height: 300px; overflow: auto; }
+  .exp { font-size: 12px; border-left: 2px solid #2f6fed; padding: 6px 10px; margin: 8px 0; background: #101d35; border-radius: 0 6px 6px 0; }
+  .exp .t { color: #ffd591; }
+  .exp pre { white-space: pre-wrap; margin: 4px 0 0; color: #b7c7e2; font-family: inherit; }
+  #explist { max-height: 420px; overflow: auto; }
+</style>
+</head>
+<body>
+<header><h1>ContentForge · 内容工厂控制台</h1><small>LangGraph 多智能体 · 发布回流 · 经验库自优化闭环</small></header>
+<main>
+  <section>
+    <div class="card">
+      <h2>新建生产任务</h2>
+      <label>来源链接</label>
+      <input type="text" id="source" placeholder="B站/抖音/快手/小红书分享链接">
+      <label>来源渠道</label>
+      <select id="channel">
+        <option value="auto" selected>自动识别</option>
+        <option value="bilibili">B站</option>
+        <option value="douyin">抖音</option>
+        <option value="kuaishou">快手</option>
+        <option value="xiaohongshu">小红书</option>
+      </select>
+      <label>视觉风格</label>
+      <select id="visualStyle">
+        <option value="tech_infographic" selected>科技信息流</option>
+        <option value="anime">日系插画</option>
+        <option value="realistic">写实电影感</option>
+      </select>
+      <label>生成档位</label>
+      <select id="generationMode">
+        <option value="balanced" selected>均衡（8-12图 + 2-3视频镜头）</option>
+        <option value="low_cost">低成本</option>
+        <option value="high_quality">高质量</option>
+      </select>
+      <label>虚拟讲解员 ID</label>
+      <input type="text" id="characterId" value="host_default">
+      <label>目标发布平台</label>
+      <div class="platform-row">
+        <label><input type="checkbox" class="targetPlatform" value="bilibili" checked> B站</label>
+        <label><input type="checkbox" class="targetPlatform" value="douyin"> 抖音</label>
+        <label><input type="checkbox" class="targetPlatform" value="kuaishou"> 快手</label>
+        <label><input type="checkbox" class="targetPlatform" value="xiaohongshu"> 小红书</label>
+      </div>
+      <label>手动补录标题（解析失败时可选）</label>
+      <input type="text" id="manualTitle" placeholder="例如：3个提升效率的习惯">
+      <label>手动补录文案</label>
+      <textarea id="manualTranscript" rows="3" placeholder="粘贴原始文案或视频简介"></textarea>
+      <label>语言风格（可选）</label>
+      <input type="text" id="style" placeholder="例如：偏网感、轻松吐槽向">
+      <button onclick="submitJob()">开始生产</button>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>任务列表</h2>
+      <button class="secondary" onclick="loadJobs()">刷新</button>
+      <ul id="jobs"></ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>实时 Trace</h2>
+    <div id="meta">选择左侧任务开始查看</div>
+    <div id="actions" style="display:none">
+      <button id="btnApprove" onclick="approveReview()">通过审核</button>
+      <button id="btnReject" class="secondary" onclick="rejectReview()">打回重写</button>
+      <button id="btnEditAssets" class="secondary" onclick="toggleAssetEditor()">编辑后再审</button>
+      <button id="btnRenderVideo" onclick="renderVideo()">生成视频</button>
+      <span style="font-size:12px;color:#ffd591">发布回填：</span>
+      <select id="publishPlatform">
+        <option value="bilibili">B站</option>
+        <option value="douyin">抖音</option>
+        <option value="kuaishou">快手</option>
+        <option value="xiaohongshu">小红书</option>
+      </select>
+      <input type="text" id="externalId" placeholder="B站填 BV号或视频链接；其他平台填 ID/链接">
+      <input type="text" id="publishUrl" placeholder="发布链接（可选）">
+      <button id="btnPrepare" class="secondary" onclick="preparePublish()">生成发布包</button>
+      <button id="btnUpload" class="secondary" onclick="openUpload()">打开创作中心</button>
+      <button id="btnPub" onclick="markPublished()">标记已发布</button>
+      <button id="btnSync" class="secondary" onclick="syncMetrics()">同步当前平台数据</button>
+      <button id="btnManualMetrics" class="secondary" onclick="showManualMetrics()">手动录入指标</button>
+    </div>
+    <div id="assetEditor" style="display:none;margin-top:10px;">
+      <label>脚本 JSON</label>
+      <textarea id="scriptEditor" rows="10"></textarea>
+      <label>分镜 JSON</label>
+      <textarea id="storyboardEditor" rows="10"></textarea>
+      <button onclick="saveAssetEdit()">保存并重新审核</button>
+    </div>
+    <div id="assetSummary" style="margin-top:10px;font-size:12px;color:#bcd0ea;"></div>
+    <div id="manualMetrics" style="display:none;margin-top:10px;font-size:12px;color:#bcd0ea;">
+      <span>播放</span><input type="text" id="metricView" value="0" style="width:85px">
+      <span>点赞</span><input type="text" id="metricLike" value="0" style="width:75px">
+      <span>评论</span><input type="text" id="metricReply" value="0" style="width:75px">
+      <span>收藏</span><input type="text" id="metricFavorite" value="0" style="width:75px">
+      <span>转发</span><input type="text" id="metricShare" value="0" style="width:75px">
+      <button class="secondary" onclick="importMetrics()">保存指标</button>
+    </div>
+    <div id="events"></div>
+    <div id="metrics" style="margin-top:10px"></div>
+  </section>
+
+  <section class="card">
+    <h2>经验库（数据回流沉淀）</h2>
+    <div style="display:flex; gap:6px">
+      <input type="text" id="expQuery" placeholder="搜索：例如 减肥/冷知识/口播节奏">
+      <button style="white-space:nowrap" onclick="searchExp()">搜索</button>
+      <button class="secondary" onclick="loadExp()">全部</button>
+    </div>
+    <div id="explist"></div>
+  </section>
+</main>
+<script>
+let es = null;
+let current = null;
+let publishPackage = null;
+
+function esc(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+async function submitJob(){
+  const source = document.getElementById('source').value.trim();
+  const style = document.getElementById('style').value.trim();
+  const channel = document.getElementById('channel').value;
+  const visual_style = document.getElementById('visualStyle').value;
+  const generation_mode = document.getElementById('generationMode').value;
+  const character_id = document.getElementById('characterId').value.trim() || 'host_default';
+  const target_platforms = Array.from(document.querySelectorAll('.targetPlatform:checked')).map(x => x.value);
+  const manualTitle = document.getElementById('manualTitle').value.trim();
+  const manualTranscript = document.getElementById('manualTranscript').value.trim();
+  const manual = (manualTitle || manualTranscript) ? {
+    title: manualTitle,
+    description: manualTranscript,
+    transcript: manualTranscript,
+    platform: channel === 'auto' ? 'manual' : channel,
+  } : {};
+  if(!source) return alert('请输入分享链接');
+  const r = await fetch('/api/jobs', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({source, style, channel, target_platforms, manual, visual_style, generation_mode, character_id})});
+  const j = await r.json();
+  if(j.job_id){ loadJobs(); selectJob(j.job_id); }
+}
+
+async function loadJobs(){
+  const r = await fetch('/api/jobs');
+  const d = await r.json();
+  const ul = document.getElementById('jobs');
+  ul.innerHTML = '';
+  for(const j of (d.jobs || [])){
+    const li = document.createElement('li');
+    li.onclick = () => selectJob(j.id);
+    const t = document.createElement('span');
+    t.textContent = (j.title || j.id).slice(0, 34);
+    const s = document.createElement('span');
+    s.className = 'st ' + (j.status === 'failed' ? 'failed' : '');
+    s.textContent = j.status + (j.published ? '·已发布' : '') + (j.manual_review ? '·复核' : '');
+    li.append(t, s);
+    ul.appendChild(li);
+  }
+}
+
+function showActions(j){
+  const box = document.getElementById('actions');
+  const canReview = j && j.status === 'awaiting_review';
+  const canRender = j && j.review_status === 'approved' && j.status === 'approved';
+  const canPublish = j && j.status === 'done' && j.result && j.result.media;
+  const canSync = j && Object.keys(j.publish_records || {}).length > 0;
+  box.style.display = (canReview || canRender || canPublish || canSync) ? 'flex' : 'none';
+  document.getElementById('btnApprove').style.display = canReview ? '' : 'none';
+  document.getElementById('btnReject').style.display = canReview ? '' : 'none';
+  document.getElementById('btnEditAssets').style.display = canReview ? '' : 'none';
+  document.getElementById('btnRenderVideo').style.display = canRender ? '' : 'none';
+  document.getElementById('externalId').style.display = canPublish ? '' : 'none';
+  document.getElementById('publishUrl').style.display = canPublish ? '' : 'none';
+  document.getElementById('publishPlatform').style.display = canPublish ? '' : 'none';
+  document.getElementById('btnPrepare').style.display = canPublish ? '' : 'none';
+  document.getElementById('btnUpload').style.display = canPublish ? '' : 'none';
+  document.getElementById('btnPub').style.display = canPublish ? '' : 'none';
+  document.getElementById('btnManualMetrics').style.display = canPublish ? '' : 'none';
+  document.getElementById('btnSync').disabled = !canSync;
+}
+
+async function selectJob(id){
+  current = id;
+  document.getElementById('events').innerHTML = '';
+  const r = await fetch('/api/jobs/' + id);
+  const j = await r.json();
+  document.getElementById('meta').innerHTML =
+    `<b>${esc(j.id)}</b> · 渠道 ${esc(j.channel || 'bilibili')} · 来源 ${esc(j.source)} · ${j.status}${j.manual_review ? ' <span class="badge">建议人工复核</span>' : ''}<br>${esc(j.run_dir || '')}<br>风格：${esc(j.visual_style || 'tech_infographic')} · 档位：${esc(j.generation_mode || 'balanced')} · 角色：${esc(j.character_id || 'host_default')}<br>目标：${esc((j.target_platforms || []).join(' / '))} · 发布：${esc(Object.keys(j.publish_records || {}).join(' / ') || '未发布')}`;
+  const publishedPlatforms = Object.keys(j.publish_records || {});
+  const firstTarget = publishedPlatforms[0] || (j.target_platforms || [])[0] || 'bilibili';
+  document.getElementById('publishPlatform').value = firstTarget;
+  document.getElementById('manualMetrics').style.display = 'none';
+  publishPackage = null;
+  showActions(j);
+  loadAssetPack(id);
+  loadMetrics(id);
+  if(es){ es.close(); }
+  es = new EventSource('/api/jobs/' + id + '/events?last=0');
+  es.onmessage = (e) => appendEvent(JSON.parse(e.data));
+  es.addEventListener('close', async () => {
+    if(es){ es.close(); }
+    const rr = await fetch('/api/jobs/' + id);
+    const jj = await rr.json();
+    showActions(jj); loadJobs();
+  });
+}
+
+async function loadAssetPack(id){
+  const box = document.getElementById('assetSummary');
+  box.innerHTML = '正在加载内容资产包...';
+  const r = await fetch('/api/jobs/' + id + '/assets');
+  const d = await r.json();
+  if(!d.ok){
+    box.innerHTML = '<span style="color:#8aa0c0">内容资产包尚未生成</span>';
+    return null;
+  }
+  const p = d.asset_pack;
+  const s = p.selected_script || {};
+  const review = p.review || {};
+  box.innerHTML =
+    '<div><b>资产包：</b>' + esc((p.artifacts || {}).content_assets_md || '') + '</div>' +
+    '<div><b>标题：</b>' + esc(s.title || '') + '</div>' +
+    '<div><b>审核：</b>' + (review.pass ? '通过' : '待修改') +
+    ' · 主题 ' + esc(review.topic_consistency ?? '-') +
+    ' · 事实 ' + esc(review.fact_support ?? '-') + '</div>' +
+    '<div><b>角度：</b>' + esc((p.ideas || []).map(x => x.title).join(' / ')) + '</div>';
+  return p;
+}
+
+async function approveReview(){
+  if(!current) return;
+  const r = await fetch('/api/jobs/' + current + '/review', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'approve'})
+  });
+  const d = await r.json();
+  if(!d.ok) return alert('审核失败: ' + d.error);
+  alert('已通过审核，可继续生成视频');
+  selectJob(current);
+}
+
+async function rejectReview(){
+  if(!current) return;
+  const feedback = window.prompt('请输入打回修改意见：', '保持原主题，删除原文没有的事实');
+  if(feedback === null) return;
+  const r = await fetch('/api/jobs/' + current + '/review', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'reject', feedback})
+  });
+  const d = await r.json();
+  if(!d.ok) return alert('打回失败: ' + d.error);
+  alert('已重新生成资产包，请再次审核');
+  selectJob(current);
+}
+
+async function toggleAssetEditor(){
+  const box = document.getElementById('assetEditor');
+  if(box.style.display === 'block'){
+    box.style.display = 'none';
+    return;
+  }
+  const pack = await loadAssetPack(current);
+  if(!pack) return;
+  document.getElementById('scriptEditor').value = JSON.stringify(pack.selected_script || {}, null, 2);
+  document.getElementById('storyboardEditor').value = JSON.stringify(pack.storyboard || {}, null, 2);
+  box.style.display = 'block';
+}
+
+async function saveAssetEdit(){
+  if(!current) return;
+  try{
+    const script = JSON.parse(document.getElementById('scriptEditor').value);
+    const storyboard = JSON.parse(document.getElementById('storyboardEditor').value);
+    const r = await fetch('/api/jobs/' + current + '/review', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'edit', script, storyboard})
+    });
+    const d = await r.json();
+    if(!d.ok) return alert('保存失败: ' + d.error);
+    document.getElementById('assetEditor').style.display = 'none';
+    alert('资产已保存并重新审核');
+    selectJob(current);
+  }catch(err){
+    alert('JSON 格式错误: ' + err.message);
+  }
+}
+
+async function renderVideo(){
+  if(!current) return;
+  const r = await fetch('/api/jobs/' + current + '/render', {method:'POST'});
+  const d = await r.json();
+  if(!d.ok) return alert('无法生成视频: ' + d.error);
+  alert('已开始生成视频，可在 Trace 中查看进度');
+  selectJob(current);
+}
+
+function appendEvent(ev){
+  const box = document.getElementById('events');
+  const div = document.createElement('div');
+  div.className = 'ev';
+  const ts = (ev.ts || '').slice(11, 19);
+  div.innerHTML = `<span class="k">[${ts} ${esc(ev.k)}]</span> <span class="m">${esc(ev.message||'')}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function markPublished(){
+  const external_id = document.getElementById('externalId').value.trim();
+  const platform = document.getElementById('publishPlatform').value;
+  const url = document.getElementById('publishUrl').value.trim();
+  if(!external_id && !url) return alert('请填发布后的视频 ID、BV号或视频链接');
+  const r = await fetch('/api/jobs/' + current + '/publish/mark', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({platform, external_id, url})});
+  const j = await r.json();
+  if(j.ok){
+    alert(j.warning || '已记录发布状态');
+    loadJobs(); selectJob(current); loadExp();
+  }
+  else alert('失败: ' + j.error);
+}
+
+async function preparePublish(silent=false){
+  const platform = document.getElementById('publishPlatform').value;
+  const r = await fetch('/api/jobs/' + current + '/publish/prepare', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({platforms:[platform]})
+  });
+  const d = await r.json();
+  if(!d.ok){ if(!silent) alert('失败: ' + d.error); return null; }
+  publishPackage = d.package.platforms || {};
+  const item = publishPackage[platform];
+  if(item){
+    document.getElementById('externalId').placeholder = item.platform === 'bilibili'
+      ? 'B站：填写 BV号，或直接粘贴视频链接'
+      : `填写 ${item.platform_name} 发布后的视频 ID / 链接`;
+    document.getElementById('btnUpload').textContent = `打开${item.platform_name}创作中心`;
+    if(!silent) alert(`发布包已生成：${d.package.package_dir}\n请先上传成片，再回填发布 ID。`);
+    return item;
+  }
+  if(!silent) alert('该平台发布包生成失败');
+  return null;
+}
+
+async function openUpload(){
+  const platform = document.getElementById('publishPlatform').value;
+  let item = publishPackage && publishPackage[platform];
+  if(!item){ item = await preparePublish(true); }
+  const url = item && item.upload_url;
+  if(!url) return alert('无法生成该平台创作中心链接');
+  const win = window.open(url, '_blank');
+  if(!win) window.location.href = url;
+}
+
+async function syncMetrics(){
+  const platform = document.getElementById('publishPlatform').value;
+  const url = platform === 'bilibili'
+    ? '/api/jobs/' + current + '/sync'
+    : '/api/jobs/' + current + '/metrics/sync';
+  const r = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: platform === 'bilibili' ? undefined : JSON.stringify({platform})
+  });
+  const j = await r.json();
+  if(j.ok){ loadMetrics(current); loadExp(); loadJobs(); }
+  else {
+    if(j.manual_required) showManualMetrics();
+    alert('自动同步失败：' + j.error + '\n请使用下方手动录入指标。');
+  }
+}
+
+function showManualMetrics(){
+  document.getElementById('manualMetrics').style.display = 'block';
+}
+
+async function importMetrics(){
+  const platform = document.getElementById('publishPlatform').value;
+  const stats = {
+    view: Number(document.getElementById('metricView').value || 0),
+    like: Number(document.getElementById('metricLike').value || 0),
+    reply: Number(document.getElementById('metricReply').value || 0),
+    favorite: Number(document.getElementById('metricFavorite').value || 0),
+    share: Number(document.getElementById('metricShare').value || 0)
+  };
+  const r = await fetch('/api/jobs/' + current + '/metrics/import', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({platform, stats})
+  });
+  const j = await r.json();
+  if(j.ok){ alert('指标已保存并进入复盘'); loadMetrics(current); loadExp(); loadJobs(); }
+  else alert('保存失败: ' + j.error);
+}
+
+async function loadMetrics(id){
+  const box = document.getElementById('metrics');
+  const r = await fetch('/api/jobs/' + id + '/metrics');
+  const d = await r.json();
+  const rows = d.metrics || [];
+  if(!rows.length){ box.innerHTML = '<div class="metric-row" style="color:#8aa0c0">暂无数据回流，发布后点「同步数据+复盘」</div>'; return; }
+  const last = rows[rows.length - 1];
+  const max = Math.max(last.view, 1);
+  box.innerHTML = '<div class="metric-row"><span class="n">播放</span><div class="bar"><i style="width:' + (100 * last.view / max) + '%"></i></div><span>' + last.view + '</span></div>' +
+    '<div class="metric-row"><span class="n">点赞</span><div class="bar"><i style="width:' + (100 * last.like / max) + '%"></i></div><span>' + last.like + '</span></div>' +
+    '<div class="metric-row"><span class="n">投币/转发</span><div class="bar"><i style="width:' + (100 * (last.coin + last.share) / max) + '%"></i></div><span>' + (last.coin + last.share) + '</span></div>' +
+    '<div class="metric-row"><span class="n">收藏/弹幕</span><div class="bar"><i style="width:' + (100 * (last.favorite + last.danmaku) / max) + '%"></i></div><span>' + (last.favorite + last.danmaku) + '</span></div>' +
+    '<div style="color:#8aa0c0;font-size:11px;margin-top:6px">最近采集 ' + rows.length + ' 次 · 最新 ' + (last.captured_at || '').slice(0, 19) + '</div>';
+}
+
+async function searchExp(){
+  const q = document.getElementById('expQuery').value.trim();
+  await loadExp(q ? '?q=' + encodeURIComponent(q) : '');
+}
+
+async function loadExp(extra){
+  const box = document.getElementById('explist');
+  const r = await fetch('/api/experience' + (extra || ''));
+  const d = await r.json();
+  const items = d.items || [];
+  if(!items.length){ box.innerHTML = '<div style="color:#8aa0c0;font-size:12px">暂无经验沉淀</div>'; return; }
+  box.innerHTML = items.map(it =>
+    '<div class="exp"><span class="t">#' + it.id + ' ' + esc(it.title || it.topic || it.source_job_id || '') + '</span>' +
+    (it.source_job_id ? ' <span style="color:#6f86a8">job:' + esc(it.source_job_id) + '</span>' : '') +
+    (typeof it._score === 'number' ? ' <span style="color:#55d0a0">sim ' + it._score.toFixed(3) + '</span>' : '') +
+    '<pre>' + esc(it.insights || '') + '</pre></div>').join('');
+}
+
+loadJobs();
+loadExp();
+</script>
+</body>
+</html>

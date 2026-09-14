@@ -1,0 +1,35 @@
+llm:
+  provider: siliconflow
+  chat_model: deepseek-ai/DeepSeek-V3
+  rewrite_model: deepseek-ai/DeepSeek-V3
+  embed_model: BAAI/bge-m3
+  temperature: 0.4
+
+tts:
+  model: FunAudioLLM/CosyVoice2-0.5B
+  voice: FunAudioLLM/CosyVoice2-0.5B:claire
+  speed: 1.0
+
+video:
+  width: 1080
+  height: 1920
+  fps: 24
+  bg_rgb: [12, 20, 38]
+  accent_rgb: [99, 179, 255]
+  asset_dir: data/assets
+  music_dir: data/music
+  character_dir: data/characters
+
+bilibili:
+  timeout: 15
+  retries: 3
+
+transcript:
+  mode: cc_or_asr
+  asr_model: FunAudioLLM/SenseVoiceSmall
+  max_seconds: 240
+  enabled: true
+
+paths:
+  work_dir: runs
+  data_dir: data
